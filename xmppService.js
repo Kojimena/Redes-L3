@@ -11,11 +11,6 @@ const xmpp = client({
   password: "nutella56",
 });
 
-const contacts = [
-    "alb21005@alumchat.lol",
-    "alb210041@alumchat.lol",
-    "her21000@alumchat.lol",
-]
 
 debug(xmpp, true);
 
