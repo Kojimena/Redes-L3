@@ -16,7 +16,6 @@ const contacts = [
     "her21000@alumchat.lol",
 ]
 
-
 const xmpp = client({
   service: "ws://alumchat.lol:7070/ws",
   domain: 'alumchat.lol',
@@ -26,7 +25,7 @@ const xmpp = client({
 });
 
 
-debug(xmpp, true);
+debug(xmpp, false);  // Falso para no mostrar los mensajes de debug
 
 xmpp.on("error", (err) => {
   console.error(err);
@@ -34,6 +33,7 @@ xmpp.on("error", (err) => {
 
 xmpp.on("offline", () => {
   console.log("offline");
+  xmpp.stop();
 });
 
 xmpp.on("stanza", async (stanza) => {
@@ -43,37 +43,50 @@ xmpp.on("stanza", async (stanza) => {
   }
 });
 
-xmpp.on("online", async () => {
-  await xmpp.send(xml("presence"));
+const flooding = (to, body) => {
+  if (contacts.includes(to)) {
+      console.log(`Message: ${body} sent to ${to}`);
+      sendMessage(to, body);
+  } else {
+      contacts.forEach((contact) => {
+          console.log(`Message: ${body} sent to ${contact}`);
+          sendMessage(contact, body);
+      });
+  }
+  
+}
 
+xmpp.on("online", async () => {
+  console.log("---online");
+  await xmpp.send(xml("presence"));
+  rl.question("Enter the message: ", (msg) => {
+    rl.question("Enter the destination: ", (to) => {
+        const body = new message("message", "her21004@alumchat.lol", to, 0, [], msg);
+        console.log("Created message: ", body.toString());
+        flooding(to, body.toString());
+    });
+  });
 });
 
 async function connect() {
     await xmpp.start();
 }
 
-// TODO Cuando entra un mensaje, si el destino no somos nosotros, lo reenviamos a todos los contactos
-
-const flooding = (to, message) => {
-
-    if (contacts.includes(to)) {
-        console.log(`Message: ${message} sent to ${to}`);
-    } else {
-        contacts.forEach((contact) => {
-            console.log(`Message: ${message} sent to ${contact}`);
-        });
-    }
-    
+async function sendMessage(to, body) {
+  try {
+    const stanza = xml('message', { to, type: 'chat' }, xml('body', {}, body));
+    await xmpp.send(stanza);
+    console.log('Message sent');
+  } catch (err) {
+    console.error('❌ Message error:', err.toString());
+  }
 }
+
+
+// TODO Cuando entra un mensaje, si el destino no somos nosotros, lo reenviamos a todos los contactos
 
 function execute() {
     connect();
-     rl.question("Enter the message: ", (msg) => {
-        rl.question("Enter the destination: ", (to) => {
-            const message = message("message", to, 0, [], msg);
-            flooding(message, to);
-        });
-    } ); 
 }
 
 execute();

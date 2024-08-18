@@ -18,6 +18,10 @@ class message {
         this.headers = headers;
         this.payload = payload;
     }
+
+    toString() {
+        return JSON.stringify(this);
+    }
 }
 
 module.exports = message;
