@@ -12,9 +12,15 @@ const rl = readline.createInterface({
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 
-const group = 'B';  // Grupo actual
-const username = 'grupo6@alumchat.lol';  // Usuario actual
-const password = '1234';  // Contraseña del usuario actual
+// leer grupo, usuario y contraseña de los argumentos de la línea de comandos
+if (process.argv.length !== 5) {
+    console.log("Usage: node linkState.js <group> <username> <password>");
+    process.exit(1);
+}
+
+const group = process.argv[2];
+const username = process.argv[3];
+const password = process.argv[4];
 
 const contacts = [];
 const topology = {};
@@ -23,8 +29,8 @@ const xmpp = client({
     service: "ws://alumchat.lol:7070/ws",
     domain: 'alumchat.lol',
     resource: 'web',
-    username: 'grupo6',
-    password: '1234',
+    username: username.split('@')[0],
+    password: password,
   });
 
 debug(xmpp);
