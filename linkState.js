@@ -4,6 +4,10 @@ const message = require("./message");
 const readline = require("readline");
 const debug = require("@xmpp/debug");
 
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+});
 
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -42,6 +46,15 @@ xmpp.on("online", async () => {
     await xmpp.send(xml("presence"));
     await getContacts();
     requestTopology();
+
+    rl.question("Enter the message: ", (msg) => {
+        rl.question("Enter the destination: ", (to) => {
+            const body = new message("message", username, to, 0, [], msg);
+            console.log("Created message: ", body.toString());
+
+            linkStateAlgorithm(body);
+        });
+      });
 });
 
 /**
@@ -96,9 +109,100 @@ const requestTopology = () => {
     })
 }
 
+const dijkstra = (graph, start) => {
+    // Create an object to store the shortest distance from the start node to every other node
+    let distances = {};
+
+    // A set to keep track of all visited nodes
+    let visited = new Set();
+
+    // Get all the nodes of the graph
+    let nodes = Object.keys(graph);
+    console.log("Nodes: ", nodes);
+
+    // Initially, set the shortest distance to every node as Infinity
+    for (let node of nodes) {
+        distances[node] = Infinity;
+    }
+    
+    // The distance from the start node to itself is 0
+    distances[start] = 0;
+
+    // Loop until all nodes are visited
+    while (nodes.length) {
+        // Sort nodes by distance and pick the closest unvisited node
+        nodes.sort((a, b) => distances[a] - distances[b]);
+        let closestNode = nodes.shift();
+
+        // If the shortest distance to the closest node is still Infinity, then remaining nodes are unreachable and we can break
+        if (distances[closestNode] === Infinity) break;
+
+        // Mark the chosen node as visited
+        console.log("Closest node: ", closestNode);
+        visited.add(closestNode);
+
+        // For each neighboring node of the current node
+        for (let neighbor in graph[closestNode]) {
+            // If the neighbor hasn't been visited yet
+            if (!visited.has(neighbor)) {
+                // Calculate tentative distance to the neighboring node
+                let newDistance = distances[closestNode] + graph[closestNode][neighbor];
+                
+                // If the newly calculated distance is shorter than the previously known distance to this neighbor
+                if (newDistance < distances[neighbor]) {
+                    // Update the shortest distance to this neighbor
+                    distances[neighbor] = newDistance;
+                }
+            }
+        }
+    }
+
+    // Return the shortest distance from the start node to all nodes
+    return distances;
+}
+
+const linkStateAlgorithm = (msg) => {
+    console.log("Link State Algorithm!!!");
+
+    // Asumir un peso de 1 para cada enlace
+    const weights = {};
+    const nodes = Object.keys(topology);
+
+    // Construir la tabla de pesos para cada conexión directa
+    nodes.forEach(n => {
+        weights[n] = {};
+        topology[n].forEach(neighbor => {
+            weights[n][neighbor] = 1;  // Establece el peso de cada conexión
+        });
+    });
+
+    // Ingresar los nodos de la cuenta actual
+    weights[username] = {};
+    contacts.forEach(contact => {
+        weights[username][contact] = 1;
+    });
+
+    console.log("Weights: ", weights);
+
+    // Aplica Dijkstra para encontrar las rutas más cortas desde el nodo actual
+    const distances = dijkstra(weights, username);
+
+    console.log("Distances: ", distances);
+
+};
+
+
+
+
 
 function execute() {
     connect();
 }
 
 execute();
+
+// {"type":"info","from":"alb210041@alumchat.lol","to":"grupo6@alumchat.lol","hops":0,"headers":[{"request":"topology"}],"payload":["alb111@alumchat.lol"]}
+
+// {"type":"info","from":"her21199@alumchat.lol","to":"grupo6@alumchat.lol","hops":0,"headers":[{"request":"topology"}],"payload":["alb210041@alumchat.lol"]}
+// {"type":"info","from":"alb210041@alumchat.lol","to":"grupo6@alumchat.lol","hops":0,"headers":[{"request":"topology"}],"payload":["ram21600@alumchat.lol"]}
+//  {"type":"info","from":"ram21600@alumchat.lol","to":"grupo6@alumchat.lol","hops":0,"headers":[{"request":"topology"}],"payload":["her21000@alumchat.lol"]}
