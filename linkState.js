@@ -40,13 +40,7 @@ async function connect() {
     await xmpp.start();
 }
 
-
-xmpp.on("online", async () => {
-    console.log("---online");
-    await xmpp.send(xml("presence"));
-    await getContacts();
-    requestTopology();
-
+const sendMessage = () => {
     rl.question("Enter the message: ", (msg) => {
         rl.question("Enter the destination: ", (to) => {
             const body = new message("message", username, to, 0, [], msg);
@@ -54,7 +48,16 @@ xmpp.on("online", async () => {
 
             linkStateAlgorithm(body);
         });
-      });
+        });
+}
+
+xmpp.on("online", async () => {
+    console.log("---online");
+    await xmpp.send(xml("presence"));
+    await getContacts();
+    requestTopology();
+
+    sendMessage();
 });
 
 /**
@@ -90,7 +93,9 @@ xmpp.on("stanza", async (stanza) => {
 
             // if the sender is not in the topology, request its topology
             const topologykeys = Object.keys(topology);
-            if (!topologykeys.includes(msg.from)) {
+            if (!topologykeys.includes(msg.from) && msg.from !== username) {
+                console.log("Requesting topology from: ", msg.from);
+
                 const body = new message("echo", username, msg.from, 0, [{"request": "topology"}], "Hello, I need the topology");
                 console.log("Created message: ", body.toString());
                 xmpp.send(xml("message", { to: msg.from, from: username }, xml("body", {}, body.toString())));
@@ -103,18 +108,20 @@ xmpp.on("stanza", async (stanza) => {
             topology[msg.from] = t;
 
             // for each element in t, if it is not in contacts, request its topology
-            t.forEach((contact) => {
-                if (!contacts.includes(contact)) {
-                    const body = new message("echo", username, contact, 0, [{"request": "topology"}], "Hello, I need the topology");
+            t.forEach((element) => {
+                if (!contacts.includes(element) && element !== username) {
+                    console.log("Requesting topology from: ", element);
+
+                    const body = new message("echo", username, element, 0, [{"request": "topology"}], "Hello, I need the topology");
                     console.log("Created message: ", body.toString());
-                    xmpp.send(xml("message", { to: contact, from: username }, xml("body", {}, body.toString())));
+                    xmpp.send(xml("message", { to: element, from: username }, xml("body", {}, body.toString())));
                 }
             });
 
         } else if (msg.type === 'message') {
 
             if (msg.to === username) {
-                console.log("Received message: ", msg.toString());
+                console.log("Received message: ", msg);
                 return;
             }
 
@@ -222,21 +229,6 @@ const linkStateAlgorithm = (msg) => {
     msg.hops = 0;
     msg.headers = path;
 
-    console.log("Sending message: ", msg.toString());
-
-    /*
-    
-    {
-        "type":"message",
-        "from":"grupo6@alumchat.lol",
-        "to":"her21000@alumchat.lol",
-        "hops":0,
-        "headers":["grupo6@alumchat.lol","ram21600@alumchat.lol","her21000@alumchat.lol"],
-        "payload":"h"
-    }
-    
-    */
-
     if (path.length === 1) {
         console.log("Message sent to: ", path[0]);
         return;
@@ -244,6 +236,8 @@ const linkStateAlgorithm = (msg) => {
 
     xmpp.send(xml("message", { to: path[1], from: msg.from }, xml("body", {}, msg.toString())));
     console.log("Message sent to: ", path[1]);
+
+    sendMessage();
 
 };
 
