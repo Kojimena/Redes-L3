@@ -93,6 +93,16 @@ xmpp.on("stanza", async (stanza) => {
             // Parseamos la topología
             const t = msg.payload;
             topology[msg.from] = t;
+
+            // for each element in t, if it is not in contacts, request its topology
+            t.forEach((contact) => {
+                if (!contacts.includes(contact)) {
+                    const body = new message("echo", username, contact, 0, [{"request": "topology"}], "Hello, I need the topology");
+                    console.log("Created message: ", body.toString());
+                    xmpp.send(xml("message", { to: contact, from: username }, xml("body", {}, body.toString())));
+                }
+            });
+
         } else if (msg.type === 'message') {
 
             if (msg.to === username) {
@@ -218,6 +228,11 @@ const linkStateAlgorithm = (msg) => {
     }
     
     */
+
+    if (path.length === 1) {
+        console.log("Message sent to: ", path[0]);
+        return;
+    }
 
     xmpp.send(xml("message", { to: path[1], from: msg.from }, xml("body", {}, msg.toString())));
     console.log("Message sent to: ", path[1]);
