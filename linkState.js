@@ -87,6 +87,14 @@ xmpp.on("stanza", async (stanza) => {
             
             // {"type":"info","from":"grupo6@alumchat.lol","to":"alb210041@alumchat.lol","hops":0,"headers":[{"request":"topology"}],"payload":["her21199@alumchat.lol","alb21005@alumchat.lol","alb210041@alumchat.lol"]}
             xmpp.send(xml("message", { to: msg.from, from: username }, xml("body", {}, body.toString())));
+
+            // if the sender is not in the topology, request its topology
+            const topologykeys = Object.keys(topology);
+            if (!topologykeys.includes(msg.from)) {
+                const body = new message("echo", username, msg.from, 0, [{"request": "topology"}], "Hello, I need the topology");
+                console.log("Created message: ", body.toString());
+                xmpp.send(xml("message", { to: msg.from, from: username }, xml("body", {}, body.toString())));
+            }
             
         } else if (msg.type === 'info') {
             // RECIBIMOS LA TOPOLOGÍA DE UN NODO
