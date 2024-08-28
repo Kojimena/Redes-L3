@@ -93,6 +93,23 @@ xmpp.on("stanza", async (stanza) => {
             // Parseamos la topología
             const t = msg.payload;
             topology[msg.from] = t;
+        } else if (msg.type === 'message') {
+
+            if (msg.to === username) {
+                console.log("Received message: ", msg.toString());
+                return;
+            }
+
+            const t = msg.payload;
+            const hops = msg.hops + 1;  // Nuestro turno
+
+            const next = msg.headers[hops+1];  // Siguiente nodo al que nosotros debemos enviar el mensaje
+
+            const body = new message("message", msg.from, msg.to, hops, msg.headers, t);   
+            console.log("Created message: ", body.toString()); 
+            
+            xmpp.send(xml("message", { to: next, from: username }, xml("body", {}, body.toString())));
+            
         }
 
         console.log("Current topology: ", topology);
@@ -226,3 +243,5 @@ execute();
 
 
 // {"type":"message","from":"grupo6@alumchat.lol","to":"her21000@alumchat.lol","hops":0,"headers":["grupo6@alumchat.lol","ram21600@alumchat.lol","her21000@alumchat.lol"],"payload":"hey heredia"}
+
+// {"type":"message","from":"her21000@alumchat.lol","to":"ram21600@alumchat.lol","hops":0,"headers":["her21000@alumchat.lol", "grupo6@alumchat.lol", "ram21600@alumchat.lol"],"payload":"hey heredia"}
