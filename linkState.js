@@ -184,7 +184,26 @@ const linkStateAlgorithm = (msg) => {
 
     console.log("Path: ", path);
 
+    msg.hops = 0;
+    msg.headers = path;
+
+    console.log("Sending message: ", msg.toString());
+
+    /*
     
+    {
+        "type":"message",
+        "from":"grupo6@alumchat.lol",
+        "to":"her21000@alumchat.lol",
+        "hops":0,
+        "headers":["grupo6@alumchat.lol","ram21600@alumchat.lol","her21000@alumchat.lol"],
+        "payload":"h"
+    }
+    
+    */
+
+    xmpp.send(xml("message", { to: path[1], from: msg.from }, xml("body", {}, msg.toString())));
+    console.log("Message sent to: ", path[1]);
 
 };
 
@@ -204,3 +223,6 @@ execute();
 // {"type":"info","from":"alb210041@alumchat.lol","to":"grupo6@alumchat.lol","hops":0,"headers":[{"request":"topology"}],"payload":["ram21600@alumchat.lol"]}
 // {"type":"info","from":"ram21600@alumchat.lol","to":"grupo6@alumchat.lol","hops":0,"headers":[{"request":"topology"}],"payload":["her21000@alumchat.lol"]}
 // {"type":"info","from":"her21000@alumchat.lol", "to":"grupo6@alumchat.lol","hops":0,"headers":[{"request":"topology"}],"payload":[]}
+
+
+// {"type":"message","from":"grupo6@alumchat.lol","to":"her21000@alumchat.lol","hops":0,"headers":["grupo6@alumchat.lol","ram21600@alumchat.lol","her21000@alumchat.lol"],"payload":"hey heredia"}
