@@ -57,6 +57,12 @@ xmpp.on("online", async () => {
     rl.question("Enter the destination: ", (to) => {
         const body = new message("message", username, to, 0, [], msg);
         console.log("Created message: ", body.toString());
+
+        if (body.from === "" || body.to === "") {
+            console.log("Error: from and to fields are required");
+            process.exit(1);
+        }
+
         flooding(to, body.toString());
     });
   });
@@ -83,6 +89,11 @@ xmpp.on("stanza", async (stanza) => {
     
     console.log(`Received message from ${from}: ${body}`);
     msg = parseMessage(body);
+
+    if (msg.from === "" || msg.to === "") {
+        console.log("Error: from and to fields are required");
+        process.exit(1);
+    }
 
     console.log("Username: ", xmpp.jid.local);
 
