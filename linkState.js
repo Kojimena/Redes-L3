@@ -121,14 +121,14 @@ xmpp.on("stanza", async (stanza) => {
             topology[msg.from] = t;
 
             // Por cada contacto, si no está en la topología, solicitamos la topología
-            const topologykeys = Object.keys(topology);
-            console.log("Topology keys: ", topologykeys);
-            if (!topologykeys.includes(msg.from) && msg.from !== username) {
-                console.log("Requesting topology from: ", msg.from);
-
-                const body = new message("echo", username, msg.from, 0, [{"request": "topology"}], "Hello, I need the topology");
-                xmpp.send(xml("message", { to: msg.from, from: username }, xml("body", {}, body.toString())));
-            }
+            const topologyKeys = Object.keys(topology);
+            t.forEach((element) => {
+                if (!topologyKeys.includes(element) && element !== username) {
+                    console.log("Requesting topology from: ", element);
+                    const body = new message("echo", username, element, 0, [{"request": "topology"}], "Hello, I need the topology");
+                    xmpp.send(xml("message", { to: element, from: username }, xml("body", {}, body.toString())));
+                }
+            });
 
         } else if (msg.type === 'message') {
 
