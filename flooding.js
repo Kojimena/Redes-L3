@@ -62,6 +62,10 @@ xmpp.on("online", async () => {
   });
 });
 
+/**
+ * Función para conectarse al servidor
+ * @returns {any}
+ */
 async function connect() {
     await xmpp.start();
 }
@@ -141,6 +145,10 @@ async function sendMessage(to, body) {
 
 // TODO Cuando entra un mensaje, si el destino no somos nosotros, lo reenviamos a todos los contactos
 
+/**
+ * Función principal
+ * @returns {any}
+ */
 function execute() {
     connect();
 }

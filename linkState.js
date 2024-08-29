@@ -42,10 +42,18 @@ const getContacts = async () => {
 }
 
 
+/**
+ * Función para conectarse al servidor XMPP
+ * @returns {any}
+ */
 async function connect() {
     await xmpp.start();
 }
 
+/**
+ * Función para enviar un mensaje
+ * @returns {any}
+ */
 const sendMessage = () => {
     rl.question("Enter the message: ", (msg) => {
         rl.question("Enter the destination: ", (to) => {
@@ -88,7 +96,7 @@ xmpp.on("stanza", async (stanza) => {
         const body = stanza.getChildText('body');
         const msg =  parseMessage(body);
         if (msg.type === 'echo') {
-            console.log("Received echo message: ", msg.toString());
+            console.log("📩Received echo message: ", msg.toString());
             
             // MANDAMOS LA TOPOLOGÍA DE UN NODO
             const body = new message("info", username, msg.from, 0, [{"request": "topology"}], contacts);
@@ -103,17 +111,15 @@ xmpp.on("stanza", async (stanza) => {
                 console.log("Requesting topology from: ", msg.from);
 
                 const body = new message("echo", username, msg.from, 0, [{"request": "topology"}], "Hello, I need the topology");
-                console.log("Created message: ", body.toString());
                 xmpp.send(xml("message", { to: msg.from, from: username }, xml("body", {}, body.toString())));
             }
             
         } else if (msg.type === 'info') {
-            // RECIBIMOS LA TOPOLOGÍA DE UN NODO
             // Parseamos la topología
             const t = msg.payload;
             topology[msg.from] = t;
 
-            // for each element in t, if it is not in contacts, request its topology
+            // Por cada contacto, si no está en la topología, solicitamos la topología
             t.forEach((element) => {
                 if (!contacts.includes(element) && element !== username) {
                     console.log("Requesting topology from: ", element);
@@ -148,6 +154,10 @@ xmpp.on("stanza", async (stanza) => {
 });
 
 
+/**
+ * Solicita la topología a todos los contactos
+ * @returns {any}
+ */
 const requestTopology = () => {
     console.log("Requesting topology...");
     contacts.forEach((contact) => {
@@ -157,6 +167,12 @@ const requestTopology = () => {
     })
 }
 
+/**
+ * Algoritmo de Dijkstra para encontrar la ruta más corta
+ * @param {any} graph
+ * @param {any} start
+ * @returns {any}
+ */
 const dijkstra = (graph, start) => {
     let distances = {};
     let visited = new Set();
@@ -193,6 +209,11 @@ const dijkstra = (graph, start) => {
     return { distances, predecessors };
 }
 
+/**
+ * Algoritmo de Link State
+ * @param {any} msg
+ * @returns {any}
+ */
 const linkStateAlgorithm = (msg) => {
     console.log("Link State Algorithm!!!");
 
@@ -248,23 +269,12 @@ const linkStateAlgorithm = (msg) => {
 };
 
 
-
-
-
+/**
+ * Función principal para ejecutar el programa
+ * @returns {any}
+ */
 function execute() {
     connect();
 }
 
 execute();
-
-// {"type":"info","from":"alb210041@alumchat.lol","to":"grupo6@alumchat.lol","hops":0,"headers":[{"request":"topology"}],"payload":["alb111@alumchat.lol"]}
-
-// {"type":"info","from":"her21199@alumchat.lol","to":"grupo6@alumchat.lol","hops":0,"headers":[{"request":"topology"}],"payload":["alb210041@alumchat.lol"]}
-// {"type":"info","from":"alb210041@alumchat.lol","to":"grupo6@alumchat.lol","hops":0,"headers":[{"request":"topology"}],"payload":["ram21600@alumchat.lol"]}
-// {"type":"info","from":"ram21600@alumchat.lol","to":"grupo6@alumchat.lol","hops":0,"headers":[{"request":"topology"}],"payload":["her21000@alumchat.lol"]}
-// {"type":"info","from":"her21000@alumchat.lol", "to":"grupo6@alumchat.lol","hops":0,"headers":[{"request":"topology"}],"payload":[]}
-
-
-// {"type":"message","from":"grupo6@alumchat.lol","to":"her21000@alumchat.lol","hops":0,"headers":["grupo6@alumchat.lol","ram21600@alumchat.lol","her21000@alumchat.lol"],"payload":"hey heredia"}
-
-// {"type":"message","from":"her21000@alumchat.lol","to":"ram21600@alumchat.lol","hops":0,"headers":["her21000@alumchat.lol", "grupo6@alumchat.lol", "ram21600@alumchat.lol"],"payload":"hey heredia"}
