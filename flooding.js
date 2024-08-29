@@ -1,3 +1,5 @@
+const { getContactsForUser } = require('./loadConfig');
+
 const { client, xml } = require("@xmpp/client");
 const debug = require("@xmpp/debug");
 const message = require("./message");
@@ -10,19 +12,30 @@ const rl = readline.createInterface({
     output: process.stdout,
 });
 
-const contacts = [
-    "alb21005@alumchat.lol",
-    "alb210041@alumchat.lol",
-    "her21000@alumchat.lol",
-]
+
+if (process.argv.length !== 5) {
+  console.log("Usage: node linkState.js <group> <username> <password>");
+  process.exit(1);
+}
+
+const group = process.argv[2];
+const username = process.argv[3];
+const password = process.argv[4];
+const contacts = [];
 
 const xmpp = client({
   service: "ws://alumchat.lol:7070/ws",
   domain: 'alumchat.lol',
   resource: 'web',
-  username: "her21004",
-  password: "nutella56",
+  username: username.split('@')[0],
+  password: password,
 });
+
+const getContacts = async () => {
+  const c = await getContactsForUser(group);
+  console.log("c: ", c);
+  contacts.push(...c);
+}
 
 
 debug(xmpp, false);  // Falso para no mostrar los mensajes de debug
@@ -38,10 +51,11 @@ xmpp.on("offline", () => {
 
 xmpp.on("online", async () => {
   console.log("---online");
+  getContacts();
   await xmpp.send(xml("presence"));
   rl.question("Enter the message: ", (msg) => {
     rl.question("Enter the destination: ", (to) => {
-        const body = new message("message", "her21004@alumchat.lol", to, 0, [], msg);
+        const body = new message("message", username, to, 0, [], msg);
         console.log("Created message: ", body.toString());
         flooding(to, body.toString());
     });
@@ -68,7 +82,7 @@ xmpp.on("stanza", async (stanza) => {
 
     console.log("Username: ", xmpp.jid.local);
 
-    if (msg.to !== xmpp.jid.local) {
+    if (msg.to !== username) {
         if (contacts.includes(msg.to)) {
             console.log(`Message: ${body} sent to ${msg.to}`);
             sendMessage(msg.to, body);
