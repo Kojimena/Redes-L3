@@ -59,6 +59,10 @@ const sendMessage = () => {
         rl.question("Enter the destination: ", (to) => {
             const body = new message("message", username, to, 0, [], msg);
             console.log("Created message: ", body.toString());
+            if (body.from === "" || body.to === "") {
+                console.log("Error: from and to fields are required");
+                process.exit(1);
+            }
 
             linkStateAlgorithm(body);
         });
